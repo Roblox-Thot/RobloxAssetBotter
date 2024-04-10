@@ -74,6 +74,6 @@ if '__main__' in __name__:
     test1 = Buyer(7216266159)
     test1.set_cookie('')
     while True:
-        sleep(0.5)
+        sleep(1)
         test1.buy()
         test1.delete()
