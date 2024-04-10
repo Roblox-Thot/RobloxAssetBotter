@@ -1,5 +1,7 @@
 from requests import session
 from copy import copy
+from time import sleep
+
 class Buyer:
     def __init__(self, asset:str|int, proxies:dict = None):
         """
@@ -21,6 +23,7 @@ class Buyer:
         self.asset_type = self.product_info['asset']['typeId']
         self.asset_price = self.product_info['product']['price']
         print(self.product_id,self.asset_type)
+        self.csrf = None
     
     def get_csrf(self) -> str:
         """
@@ -40,19 +43,27 @@ class Buyer:
             cookie (str): The user's authentication cookie.
         """
         self.session.cookies.set(".ROBLOSECURITY", cookie, domain=".roblox.com")
+        self.csrf = self.get_csrf()
         # Debugging
         # req = self.session.get("https://users.roblox.com/v1/users/authenticated").text
         # print(req)
 
     def buy(self) -> None:
-        self.session.post("https://apis.roblox.com/creator-marketplace-purchasing-service/v1/products/1781152104/purchase",
-                            headers={},
-                            params={'assetId':16802935104,'assetType':10,'expectedPrice':0,'searchId':None})
+        self.csrf = self.get_csrf()
+        asd = self.session.post(f'https://apis.roblox.com/creator-marketplace-purchasing-service/v1/products/{self.product_id}/purchase',
+                            headers={'x-csrf-token':self.csrf},
+                            json={'assetId':self.asset_id,'assetType':10,'expectedPrice':0})
+        print('buy',asd,asd.text)
 
     def delete(self) -> None:
-        self.session.post('https://www.roblox.com/asset/delete-from-inventory',
-                            headers={},
+        response = self.session.post('https://www.roblox.com/asset/delete-from-inventory',
+                            headers={'x-csrf-token':self.csrf},
                             params={"assetId":self.asset_id})
+        print('delete',response,response.text)
+        if response.status_code == 429:
+            sleep(10)
+            self.delete()
+        
 
 if '__main__' in __name__:        
     # test1 = Buyer(339406852)
@@ -60,4 +71,9 @@ if '__main__' in __name__:
     # test2.set_cookie("hi")
     # test3 = copy(test1)
     # test3.set_cookie("bye")
-    test1 = Buyer(339406852)
+    test1 = Buyer(7216266159)
+    test1.set_cookie('')
+    while True:
+        sleep(0.5)
+        test1.buy()
+        test1.delete()
