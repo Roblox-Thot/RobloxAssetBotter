@@ -47,13 +47,20 @@ class Buyer:
         # Debugging
         # req = self.session.get("https://users.roblox.com/v1/users/authenticated").text
         # print(req)
+    
+    def set_proxy(self, proxies:dict) -> None:
+        if proxies: self.session.proxies.update(proxies)
 
     def buy(self) -> None:
         self.csrf = self.get_csrf()
-        asd = self.session.post(f'https://apis.roblox.com/creator-marketplace-purchasing-service/v1/products/{self.product_id}/purchase',
+        response = self.session.post(f'https://apis.roblox.com/creator-marketplace-purchasing-service/v1/products/{self.product_id}/purchase',
                             headers={'x-csrf-token':self.csrf},
                             json={'assetId':self.asset_id,'assetType':10,'expectedPrice':0})
-        print('buy',asd,asd.text)
+        
+        print('buy',response,response.text)
+        if response.status_code == 500:
+            sleep(2)
+            self.buy()
 
     def delete(self) -> None:
         response = self.session.post('https://www.roblox.com/asset/delete-from-inventory',
@@ -72,7 +79,6 @@ if '__main__' in __name__:
     # test3 = copy(test1)
     # test3.set_cookie("bye")
     test1 = Buyer(7216266159)
-    test1.set_cookie('')
     while True:
         sleep(1)
         test1.buy()
